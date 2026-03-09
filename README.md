@@ -1,4 +1,4 @@
-# mssql-tls-proxy
+# W7-Stunnel
 
 A Docker-based TLS bridging proxy for legacy Windows 7 clients that need to
 connect to a SQL Server requiring TLS 1.2.
