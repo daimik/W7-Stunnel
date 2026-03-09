@@ -20,14 +20,23 @@ You have three options:
 This solution uses **[stunnel](https://www.stunnel.org/)** — a battle-tested open source TLS proxy — running inside a **Docker container** on an Ubuntu VM. It sits transparently between your Win7 clients and SQL Server:
 
 ```
-┌─────────────────────┐         ┌──────────────────────────┐         ┌─────────────────┐
-│   Windows 7 Client  │         │   Ubuntu VM (Docker)     │         │   SQL Server    │
-│                     │         │                          │         │                 │
-│  App / ODBC Driver  │──────▶  │  stunnel                 │──────▶  │  port 1433      │
-│                     │  plain  │  port 1433 (plain in)    │ TLS 1.2 │                 │
-│                     │  or     │  port 1434 (TLS 1.0 in)  │         │  different      │
-│                     │  TLS1.0 │                          │         │  subnet/VLAN    │
-└─────────────────────┘         └──────────────────────────┘         └─────────────────┘
+Windows 7 Clients (x2-5)              Ubuntu VM (Docker)                    SQL Server
+┌────────────────────────┐            ┌──────────────────────────┐           ┌─────────────────────┐
+│  Legacy App            │            │  stunnel proxy           │           │  SQL Server 2016+   │
+│  + ODBC Driver         │            │  (dweomer/stunnel)       │           │  requires TLS 1.2   │
+│                        │            │                          │           │                     │
+│                        │ plain TCP  │  1. Accept plain TCP     │           │  different          │
+│                        │ ─────────> │     port 1433            │           │  subnet / VLAN      │
+│                        │            │                          │           │                     │
+│                        │ TLS 1.0    │  2. Accept TLS 1.0       │           │                     │
+│                        │ ─────────> │     port 1434            │           │                     │
+│                        │            │                          │           │                     │
+│                        │            │  3. Upgrade to TLS 1.2   │  TLS 1.2  │                     │
+│                        │            │     forward to SQL Srv   │ ────────> │  port 1433          │
+│                        │            │                          │           │                     │
+│  SELECT / INSERT       │            │  4. Return results       │           │                     │
+│  results received  <───│────────────│─────────────────────── <─│───────────│── resultset         │
+└────────────────────────┘            └──────────────────────────┘           └─────────────────────┘
 ```
 
 **stunnel accepts** whatever the Win7 client sends (plain TCP or TLS 1.0) and **always forwards** the connection to SQL Server using TLS 1.2. The Win7 app has no idea — it just works.
