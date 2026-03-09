@@ -1,0 +1,22 @@
+services:
+  mssql-proxy:
+    image: dweomer/stunnel
+    container_name: mssql-tls-proxy
+    restart: unless-stopped
+    volumes:
+      - ./stunnel/mssql-proxy.conf:/etc/stunnel/stunnel.conf:ro
+    ports:
+      - "1433:1433"   # plain TCP connections from Win7
+      - "1434:1434"   # TLS 1.0 connections from Win7
+    networks:
+      - proxy-net
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "1433"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  proxy-net:
+    driver: bridge
